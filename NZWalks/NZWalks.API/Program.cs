@@ -20,6 +20,8 @@ builder.Services.AddDbContext<dbContext>(Options =>
 // Added by Sunil
 builder.Services.AddScoped<IRegionRepo, RegionRepo>();
 builder.Services.AddScoped<IWalkRepo, WalkRepo>();
+builder.Services.AddScoped<IWalksDifficultyRepo, WalksDifficultyRepo>();
+
 
 // Added by Sunil
 builder.Services.AddAutoMapper(typeof(Program).Assembly);

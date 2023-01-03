@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
@@ -8,6 +9,7 @@ namespace NZWalks.API.Controllers
 {
     [ApiController]
     [Route("region-api")]
+    [Authorize]
     public class RegionController : Controller
     {
         public IRegionRepo IRegionRepo { get; }
@@ -31,6 +33,7 @@ namespace NZWalks.API.Controllers
 
         [HttpGet]
         [Route("getallasync")]
+       
         public async Task<IActionResult> GetAllRegionsAsync()
         {
             var region = await this.IRegionRepo.GetAllAsync();
@@ -57,6 +60,12 @@ namespace NZWalks.API.Controllers
         [HttpPost]
         public async Task<IActionResult> AddRegionsAsync(AddRegionRequest _addregionrequest)
         {
+            // Validate the Request
+            //if (!ValidateAddRegionsAsync(_addregionrequest))
+            //{
+            //    return BadRequest(ModelState);
+            //}
+
             var region = new Region()
             {
                 Code = _addregionrequest.RCode,
@@ -117,5 +126,60 @@ namespace NZWalks.API.Controllers
             }
             return Ok(updatedregion);
         }
+
+        #region Private Method
+        private bool ValidateAddRegionsAsync(AddRegionRequest addRegionRequest)
+        {
+            if (addRegionRequest == null)
+            {
+                ModelState.AddModelError(nameof(addRegionRequest),
+                   $"Add Region Data is Required");
+                
+            }
+
+            if (string.IsNullOrWhiteSpace(addRegionRequest.RCode))
+            {
+                ModelState.AddModelError(nameof(addRegionRequest.RCode), 
+                    $"{nameof(addRegionRequest.RCode)} can not be empty or null");
+            }
+
+            if (string.IsNullOrWhiteSpace(addRegionRequest.RName))
+            {
+                ModelState.AddModelError(nameof(addRegionRequest.RName),
+                    $"{nameof(addRegionRequest.RName)} can not be empty or null");
+            }
+
+            if (addRegionRequest.RArea <= 0 )
+            {
+                ModelState.AddModelError(nameof(addRegionRequest.RArea),
+                    $"{nameof(addRegionRequest.RArea)} can not be less then or equal to Zero");
+            }
+
+            if (addRegionRequest.RLat <= 0)
+            {
+                ModelState.AddModelError(nameof(addRegionRequest.RLat),
+                    $"{nameof(addRegionRequest.RLat)} can not be less then or equal to Zero");
+            }
+
+            if (addRegionRequest.RLong <= 0)
+            {
+                ModelState.AddModelError(nameof(addRegionRequest.RLong),
+                    $"{nameof(addRegionRequest.RLong)} can not be less then or equal to Zero");
+            }
+
+            if (addRegionRequest.RPopulation <= 0)
+            {
+                ModelState.AddModelError(nameof(addRegionRequest.RPopulation),
+                    $"{nameof(addRegionRequest.RPopulation)} can not be less then or equal to Zero");
+            }
+
+            if (ModelState.ErrorCount > 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        #endregion
     }
 }

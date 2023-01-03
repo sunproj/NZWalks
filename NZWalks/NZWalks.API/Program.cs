@@ -1,6 +1,10 @@
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NZWalks.API.Data;
 using NZWalks.API.Repo;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,10 +25,38 @@ builder.Services.AddDbContext<dbContext>(Options =>
 builder.Services.AddScoped<IRegionRepo, RegionRepo>();
 builder.Services.AddScoped<IWalkRepo, WalkRepo>();
 builder.Services.AddScoped<IWalksDifficultyRepo, WalksDifficultyRepo>();
-
+builder.Services.AddSingleton<IUserRepo, StaticUserRepo>();
+builder.Services.AddScoped<ITokenhandler, NZWalks.API.Repo.TokenHandler>();
 
 // Added by Sunil
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
+// Added by Sunil
+
+builder.Services.
+    AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Program>());
+
+// Added by SUnil
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(o =>
+{
+    o.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey
+        (Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true
+    };
+});
 
 var app = builder.Build();
 
@@ -38,6 +70,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseAuthentication();
 
 app.MapControllers();
 
